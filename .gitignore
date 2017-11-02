@@ -1,0 +1,6 @@
+# Ignore
+js/gl/*
+
+# Exceptions
+!js/gl/dist/gl-matrix.js
+!js/gl/dist/gl-matrix-min.js
