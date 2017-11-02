@@ -11,40 +11,18 @@
 
     <title>WebGL</title>
 
+    <!-- Import proper js files.  -->
+    <script src = "js/gl/dist/gl-matrix-min.js"></script> <!-- For matrices -->
+    <script src = "js/main.js"></script>
+
 </head>
 
 <body>
     <canvas id="glCanvas" width="640" height="480"></canvas>
 
-    <script>
-        main();
-
-        /**
-         * main : Gets the proper canvas id and intializes the glcontext.
-         * Starts and handles the WebGL instance.
-         */
-        function main()
-        {
-            // Get the canvas from the body.
-            const canvas = document.querySelector("#glCanvas");
-
-            // Initialize the GL Context.
-            const gl = canvas.getContext("webgl");
-
-            // Only continue if WebGL is available and working
-            if (!gl)
-            {
-                alert("Unable to initialize WebGL.");
-                return;
-            }
-
-            // Clear.
-            gl.clearColor(0.0, 0.0, 0.0, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-
-        }
-
-    </script>
 </body>
+
+<!-- Run main -->
+<script> main(); </script>
 
 </html>
