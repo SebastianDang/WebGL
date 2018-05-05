@@ -1,24 +1,32 @@
 const GL_CANVAS_ID = "#glCanvas" // Change this if you plan to use a different id.
-const GL_CONTEXT = "webgl"
+const GL_CONTEXT = "webgl" // This should always be 'webgl'.
 
-const shader_vertex =
-    `
+// We're going to use a simple vertex shader.
+const SHADER_VERTEX =
+`
   attribute vec3 Vertex;
+  attribute vec3 Color;
 
   uniform mat4 ModelView;
   uniform mat4 Projection;
 
+  varying lowp vec3 vColor;
+
   void main()
   {
       gl_Position =  Projection * ModelView * vec4(Vertex.x, Vertex.y, Vertex.z, 1.0);
+      vColor = Color;
   }
 `;
 
-const shader_fragment =
-    `
+// We're going to use a simple fragment shader.
+const SHADER_FRAGMENT =
+`
+  varying lowp vec3 vColor;
+
   void main()
   {
-    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    gl_FragColor = vec4(vColor.x, vColor.y, vColor.z, 1.0);
   }
 `;
 
@@ -26,7 +34,8 @@ const shader_fragment =
  * main : Gets the proper canvas id and intializes the glcontext.
  * Starts and handles the WebGL instance.
  */
-function main() {
+function main()
+{
     // Get the canvas from the body.
     const canvas = document.querySelector(GL_CANVAS_ID);
 
@@ -34,19 +43,24 @@ function main() {
     const gl = canvas.getContext(GL_CONTEXT);
 
     // Only continue if WebGL is available and working
-    if (!gl) {
+    if (!gl)
+    {
         alert("Unable to initialize WebGL.");
         return;
     }
 
     // Setup the shader program.
-    const shaderProgram = initShader(gl, shader_vertex, shader_fragment);
-    const shaderProgramInfo = {
+    const shaderProgram = initShaderProgram(gl, SHADER_VERTEX, SHADER_FRAGMENT);
+    const shaderProgramInfo =
+    {
         program: shaderProgram,
-        attribLocations: {
+        attribLocations:
+        {
             vertexPosition: gl.getAttribLocation(shaderProgram, 'Vertex'),
+            vertexColor: gl.getAttribLocation(shaderProgram, 'Color'),
         },
-        uniformLocations: {
+        uniformLocations:
+        {
             projectionMatrix: gl.getUniformLocation(shaderProgram, 'Projection'),
             modelViewMatrix: gl.getUniformLocation(shaderProgram, 'ModelView'),
         },
@@ -64,7 +78,8 @@ function main() {
  * initShader:: Returns the shader program after loading the vertex & fragment shaders.
  * Returns null if failed.
  */
-function initShader(gl, vertex_source, fragment_source) {
+function initShaderProgram(gl, vertex_source, fragment_source)
+{
     // Load each shader.
     const vertex = loadShader(gl, gl.VERTEX_SHADER, vertex_source);
     const fragment = loadShader(gl, gl.FRAGMENT_SHADER, fragment_source);
@@ -76,7 +91,8 @@ function initShader(gl, vertex_source, fragment_source) {
     gl.linkProgram(shaderProgram);
 
     // If creating the shader program failed, alert
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS))
+    {
         alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
         return null;
     }
@@ -88,7 +104,8 @@ function initShader(gl, vertex_source, fragment_source) {
  * Returns the loaded shader.
  * Returns null if failed.
  */
-function loadShader(gl, type, source) {
+function loadShader(gl, type, source)
+{
     // Init this shader.
     const shader = gl.createShader(type);
 
@@ -99,7 +116,8 @@ function loadShader(gl, type, source) {
     gl.compileShader(shader);
 
     // See if it compiled successfully.
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+    {
         alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
         gl.deleteShader(shader);
         return null;
@@ -111,7 +129,8 @@ function loadShader(gl, type, source) {
  * initBuffers : Create buffer objects for our data.
  * We'll be adding more complexity for larger VAOs and VBOs later.
  */
-function initBuffers(gl) {
+function initBuffers(gl)
+{
     // Create a buffer for the square's positions.
     const positionBuffer = gl.createBuffer();
 
@@ -119,7 +138,8 @@ function initBuffers(gl) {
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
     // Now create an array of positions for the square.
-    const positions = [
+    const positions =
+    [
         1.0, 1.0, -1.0, 1.0,
         1.0, -1.0, -1.0, -1.0,
     ];
@@ -129,16 +149,35 @@ function initBuffers(gl) {
     // JavaScript array, then use it to fill the current buffer.
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
+    // Create a buffer for a set of colors.
+    const colorBuffer = gl.createBuffer();
+
+    // Bind the colorBuffer to work with this buffer now.
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+
+    // Now create an array of colors, to add different colors to points.
+    const colors =
+    [
+      1.0,  1.0,  1.0,  1.0,    // white
+      1.0,  0.0,  0.0,  1.0,    // red
+      0.0,  1.0,  0.0,  1.0,    // green
+      0.0,  0.0,  1.0,  1.0,    // blue
+    ];
+
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
     return {
-        position: positionBuffer,
+      position: positionBuffer,
+      color: colorBuffer,
     };
 }
 
 /**
- * drawScene : Draws the entire scene with shader informaion and buffers.
+ * drawScene : Draws the entire scene with shader information and buffers.
  *
  */
-function drawScene(gl, programInfo, buffers) {
+function drawScene(gl, programInfo, buffers)
+{
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -180,7 +219,6 @@ function drawScene(gl, programInfo, buffers) {
         const type = gl.FLOAT; // the data in the buffer is 32bit floats
         const normalize = false; // don't normalize
         const stride = 0; // how many bytes to get from one set of values to the next
-        // 0 = use type and numComponents above
         const offset = 0; // how many bytes inside the buffer to start from
         gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
         gl.vertexAttribPointer(
@@ -192,6 +230,26 @@ function drawScene(gl, programInfo, buffers) {
             offset);
         gl.enableVertexAttribArray(
             programInfo.attribLocations.vertexPosition);
+    }
+
+    // Tell WebGL how to pull out the colors from the color buffer
+    // into the vertexColor attribute.
+    {
+      const numComponents = 4;
+      const type = gl.FLOAT;
+      const normalize = false;
+      const stride = 0;
+      const offset = 0;
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+      gl.vertexAttribPointer(
+         programInfo.attribLocations.vertexColor,
+         numComponents,
+         type,
+         normalize,
+         stride,
+         offset);
+      gl.enableVertexAttribArray(
+         programInfo.attribLocations.vertexColor);
     }
 
     // Tell WebGL to use our program when drawing
