@@ -49,7 +49,7 @@ function main()
         return;
     }
 
-    // Setup the shader program.
+    // Setup the shader program. This will compile each.
     const shaderProgram = initShaderProgram(gl, SHADER_VERTEX, SHADER_FRAGMENT);
     const shaderProgramInfo =
     {
@@ -70,8 +70,28 @@ function main()
     // objects we'll be drawing.
     const buffers = initBuffers(gl);
 
-    // Draw the scene
-    drawScene(gl, shaderProgramInfo, buffers);
+    // Create toWorld to transform the objects in the scene.
+    const toWorld = mat4.create();
+
+    // Perform any scaling here.
+    mat4.scale(toWorld,                 // destination matrix
+                 toWorld,               // matrix to scale
+                 [1, 1, 1]);            // amount to scale
+
+    // Perform any rotations here.
+    var rotations = 0;
+    mat4.rotate(toWorld,                // destination matrix
+                 toWorld,               // matrix to rotate
+                 rotations,             // amount to rotate in radians
+                 [0, 0, 1]);            // axis to rotate around
+
+    // Perform any translations here.
+    mat4.translate(toWorld,             // destination matrix
+                    toWorld,            // matrix to translate
+                    [0.0, 0.0, -6.0]);  // amount to translate (z back 6.0)
+
+    // Animate the scene.
+    animateScene(gl, shaderProgramInfo, buffers, toWorld);
 }
 
 /**
@@ -173,10 +193,58 @@ function initBuffers(gl)
 }
 
 /**
+ * animateScene : Calls drawScene but manipulates toWorld to animate
+ * the underlying object.
+ */
+function animateScene(gl, programInfo, buffers, toWorld)
+{
+  var start = null;
+  var last = 0;
+
+  var rotationCount = 0;
+
+  function step(timestamp)
+  {
+    // We keep track of the time elapsed since the start.
+    if (!start) start = timestamp;
+    var progress = timestamp - start;
+
+    // We keep track of the delta time between the last timestamp.
+    var curr = progress * 0.001;
+    var delta = curr - last;
+    last = curr;
+
+    // Perform any animations over time here. We apply transformations to toWorld.
+    const singleRotation = 360000 * Math.PI / 180; // in msec.
+    if (progress < singleRotation)
+    {
+      mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
+    }
+    else if (progress < (2 * singleRotation))
+    {
+      mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
+      mat4.rotate(toWorld, toWorld, delta, [0, 1, 0]);
+      mat4.rotate(toWorld, toWorld, delta, [1, 0, 0]);
+    }
+    else
+    {
+
+    }
+
+    // Draw the scene.
+    drawScene(gl, programInfo, buffers, toWorld)
+
+    // Recurse.
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/**
  * drawScene : Draws the entire scene with shader information and buffers.
  *
  */
-function drawScene(gl, programInfo, buffers)
+function drawScene(gl, programInfo, buffers, toWorld)
 {
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
@@ -202,15 +270,10 @@ function drawScene(gl, programInfo, buffers)
     // as the destination to receive the result.
     mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
-    // Set the drawing position to the "identity" point, which is
-    // the center of the scene.
-    const modelViewMatrix = mat4.create();
-
-    // Now move the drawing position a bit to where we want to
-    // start drawing the square.
-    mat4.translate(modelViewMatrix, // destination matrix
-        modelViewMatrix, // matrix to translate
-        [0.0, 0.0, -6.0]); // amount to translate (z back 6.0)
+    // Now we apply the toWorld matrix to the modelViewMatrix to manipulate the
+    // object.
+    var modelViewMatrix = mat4.create();
+    modelViewMatrix = mat4.multiply(modelViewMatrix, toWorld, modelViewMatrix);
 
     // Tell WebGL how to pull out the positions from the position
     // buffer into the vertexPosition attribute.
@@ -265,6 +328,7 @@ function drawScene(gl, programInfo, buffers)
         false,
         modelViewMatrix);
 
+    // Now we call the draw function.
     {
         const offset = 0;
         const vertexCount = 4;
