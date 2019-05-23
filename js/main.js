@@ -3,7 +3,7 @@ const GL_CONTEXT = "webgl" // This should always be 'webgl'.
 
 // We're going to use a simple vertex shader.
 const SHADER_VERTEX =
-`
+    `
   attribute vec3 Vertex;
   attribute vec3 Color;
 
@@ -21,7 +21,7 @@ const SHADER_VERTEX =
 
 // We're going to use a simple fragment shader.
 const SHADER_FRAGMENT =
-`
+    `
   varying lowp vec3 vColor;
 
   void main()
@@ -34,8 +34,7 @@ const SHADER_FRAGMENT =
  * main : Gets the proper canvas id and intializes the glcontext.
  * Starts and handles the WebGL instance.
  */
-function main()
-{
+function main() {
     // Get the canvas from the body.
     const canvas = document.querySelector(GL_CANVAS_ID);
 
@@ -43,11 +42,58 @@ function main()
     const gl = canvas.getContext(GL_CONTEXT);
 
     // Only continue if WebGL is available and working
-    if (!gl)
-    {
+    if (!gl) {
         alert("Unable to initialize WebGL.");
         return;
     }
+
+    // Create geometry array
+    const positions =
+        [
+            -1.0, 1.0,
+            -1.0, 0.8,
+            0.8, 1.0,
+            0.8, 0.8,
+
+            1.0, 1.0,
+            0.8, 1.0,
+            1.0, -0.8,
+            0.8, -0.8,
+
+            1.0, -1.0,
+            1.0, -0.8,
+            -0.8, -1.0,
+            -0.8, -0.8,
+
+            -1.0, -1.0,
+            -0.8, -1.0,
+            -1.0, 0.8,
+            -0.8, 0.8,
+        ]
+
+    // Now create a matching array for colors
+    const colors =
+        [
+            1.0, 1.0, 1.0, 1.0,    // white
+            1.0, 0.0, 0.0, 1.0,    // red
+            0.0, 1.0, 0.0, 1.0,    // green
+            0.0, 0.0, 1.0, 1.0,    // blue
+
+            1.0, 1.0, 1.0, 1.0,    // white
+            1.0, 0.0, 0.0, 1.0,    // red
+            0.0, 1.0, 0.0, 1.0,    // green
+            0.0, 0.0, 1.0, 1.0,    // blue
+
+            1.0, 1.0, 1.0, 1.0,    // white
+            1.0, 0.0, 0.0, 1.0,    // red
+            0.0, 1.0, 0.0, 1.0,    // green
+            0.0, 0.0, 1.0, 1.0,    // blue
+
+            1.0, 1.0, 1.0, 1.0,    // white
+            1.0, 0.0, 0.0, 1.0,    // red
+            0.0, 1.0, 0.0, 1.0,    // green
+            0.0, 0.0, 1.0, 1.0,    // blue
+        ];
 
     // Setup the shader program. This will compile each.
     const shaderProgram = initShaderProgram(gl, SHADER_VERTEX, SHADER_FRAGMENT);
@@ -68,27 +114,27 @@ function main()
 
     // Here's where we call the routine that builds all the
     // objects we'll be drawing.
-    const buffers = initBuffers(gl);
+    const buffers = initBuffers(gl, positions, colors);
 
     // Create toWorld to transform the objects in the scene.
     const toWorld = mat4.create();
 
     // Perform any scaling here.
-    mat4.scale(toWorld,                 // destination matrix
-                 toWorld,               // matrix to scale
-                 [1, 1, 1]);            // amount to scale
+    mat4.scale(toWorld,         // destination matrix
+        toWorld,                // matrix to scale
+        [1, 1, 1]);             // amount to scale
 
     // Perform any rotations here.
     var rotations = 0;
-    mat4.rotate(toWorld,                // destination matrix
-                 toWorld,               // matrix to rotate
-                 rotations,             // amount to rotate in radians
-                 [0, 0, 1]);            // axis to rotate around
+    mat4.rotate(toWorld,        // destination matrix
+        toWorld,                // matrix to rotate
+        rotations,              // amount to rotate in radians
+        [0, 0, 1]);             // axis to rotate around
 
     // Perform any translations here.
-    mat4.translate(toWorld,             // destination matrix
-                    toWorld,            // matrix to translate
-                    [0.0, 0.0, -6.0]);  // amount to translate (z back 6.0)
+    mat4.translate(toWorld,     // destination matrix
+        toWorld,                // matrix to translate
+        [0.0, 0.0, -6.0]);      // amount to translate (z back 6.0)
 
     // Animate the scene.
     animateScene(gl, shaderProgramInfo, buffers, toWorld);
@@ -98,8 +144,7 @@ function main()
  * initShader:: Returns the shader program after loading the vertex & fragment shaders.
  * Returns null if failed.
  */
-function initShaderProgram(gl, vertex_source, fragment_source)
-{
+function initShaderProgram(gl, vertex_source, fragment_source) {
     // Load each shader.
     const vertex = loadShader(gl, gl.VERTEX_SHADER, vertex_source);
     const fragment = loadShader(gl, gl.FRAGMENT_SHADER, fragment_source);
@@ -111,8 +156,7 @@ function initShaderProgram(gl, vertex_source, fragment_source)
     gl.linkProgram(shaderProgram);
 
     // If creating the shader program failed, alert
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS))
-    {
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
         alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
         return null;
     }
@@ -124,8 +168,7 @@ function initShaderProgram(gl, vertex_source, fragment_source)
  * Returns the loaded shader.
  * Returns null if failed.
  */
-function loadShader(gl, type, source)
-{
+function loadShader(gl, type, source) {
     // Init this shader.
     const shader = gl.createShader(type);
 
@@ -136,8 +179,7 @@ function loadShader(gl, type, source)
     gl.compileShader(shader);
 
     // See if it compiled successfully.
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
-    {
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
         alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
         gl.deleteShader(shader);
         return null;
@@ -149,20 +191,12 @@ function loadShader(gl, type, source)
  * initBuffers : Create buffer objects for our data.
  * We'll be adding more complexity for larger VAOs and VBOs later.
  */
-function initBuffers(gl)
-{
+function initBuffers(gl, positions, colors) {
     // Create a buffer for the square's positions.
     const positionBuffer = gl.createBuffer();
 
     // Select the positionBuffer as the one to apply buffer operations.
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-    // Now create an array of positions for the square.
-    const positions =
-    [
-        1.0, 1.0, -1.0, 1.0,
-        1.0, -1.0, -1.0, -1.0,
-    ];
 
     // Now pass the list of positions into WebGL to build the
     // shape. We do this by creating a Float32Array from the
@@ -175,20 +209,12 @@ function initBuffers(gl)
     // Bind the colorBuffer to work with this buffer now.
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 
-    // Now create an array of colors, to add different colors to points.
-    const colors =
-    [
-      1.0,  1.0,  1.0,  1.0,    // white
-      1.0,  0.0,  0.0,  1.0,    // red
-      0.0,  1.0,  0.0,  1.0,    // green
-      0.0,  0.0,  1.0,  1.0,    // blue
-    ];
-
+    // Now pass the list of colors into WebGL.
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
     return {
-      position: positionBuffer,
-      color: colorBuffer,
+        position: positionBuffer,
+        color: colorBuffer,
     };
 }
 
@@ -196,56 +222,52 @@ function initBuffers(gl)
  * animateScene : Calls drawScene but manipulates toWorld to animate
  * the underlying object.
  */
-function animateScene(gl, programInfo, buffers, toWorld)
-{
-  var start = null;
-  var last = 0;
+function animateScene(gl, programInfo, buffers, toWorld) {
+    var start = null;
+    var last = 0;
 
-  var rotationCount = 0;
+    var rotationCount = 0;
 
-  function step(timestamp)
-  {
-    // We keep track of the time elapsed since the start.
-    if (!start) start = timestamp;
-    var progress = timestamp - start;
+    function step(timestamp) {
+        // We keep track of the time elapsed since the start.
+        if (!start) start = timestamp;
+        var progress = timestamp - start;
 
-    // We keep track of the delta time between the last timestamp.
-    var curr = progress * 0.001;
-    var delta = curr - last;
-    last = curr;
+        // We keep track of the delta time between the last timestamp.
+        var curr = progress * 0.001;
+        var delta = curr - last;
+        last = curr;
 
-    // Perform any animations over time here. We apply transformations to toWorld.
-    const singleRotation = 360000 * Math.PI / 180; // in msec.
-    if (progress < singleRotation)
-    {
-      mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
+        // Perform any animations over time here. We apply transformations to toWorld.
+        const singleRotation = 360000 * Math.PI / 180; // in msec.
+        if (progress < singleRotation) {
+            mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
+        }
+        else if (progress < (2 * singleRotation)) {
+            mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
+            mat4.rotate(toWorld, toWorld, delta, [0, 1, 0]);
+            mat4.rotate(toWorld, toWorld, delta, [1, 0, 0]);
+        }
+        else {
+            mat4.rotate(toWorld, toWorld, delta, [1, 0, 1]);
+            mat4.rotate(toWorld, toWorld, delta, [0, 1, 0]);
+            mat4.rotate(toWorld, toWorld, delta, [1, 0, 1]);
+        }
+
+        // Draw the scene.
+        drawScene(gl, programInfo, buffers, toWorld)
+
+        // Recurse.
+        requestAnimationFrame(step);
     }
-    else if (progress < (2 * singleRotation))
-    {
-      mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
-      mat4.rotate(toWorld, toWorld, delta, [0, 1, 0]);
-      mat4.rotate(toWorld, toWorld, delta, [1, 0, 0]);
-    }
-    else
-    {
-
-    }
-
-    // Draw the scene.
-    drawScene(gl, programInfo, buffers, toWorld)
-
-    // Recurse.
     requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
 }
 
 /**
  * drawScene : Draws the entire scene with shader information and buffers.
  *
  */
-function drawScene(gl, programInfo, buffers, toWorld)
-{
+function drawScene(gl, programInfo, buffers, toWorld) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -298,21 +320,21 @@ function drawScene(gl, programInfo, buffers, toWorld)
     // Tell WebGL how to pull out the colors from the color buffer
     // into the vertexColor attribute.
     {
-      const numComponents = 4;
-      const type = gl.FLOAT;
-      const normalize = false;
-      const stride = 0;
-      const offset = 0;
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-      gl.vertexAttribPointer(
-         programInfo.attribLocations.vertexColor,
-         numComponents,
-         type,
-         normalize,
-         stride,
-         offset);
-      gl.enableVertexAttribArray(
-         programInfo.attribLocations.vertexColor);
+        const numComponents = 4;
+        const type = gl.FLOAT;
+        const normalize = false;
+        const stride = 0;
+        const offset = 0;
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+        gl.vertexAttribPointer(
+            programInfo.attribLocations.vertexColor,
+            numComponents,
+            type,
+            normalize,
+            stride,
+            offset);
+        gl.enableVertexAttribArray(
+            programInfo.attribLocations.vertexColor);
     }
 
     // Tell WebGL to use our program when drawing
@@ -331,7 +353,7 @@ function drawScene(gl, programInfo, buffers, toWorld)
     // Now we call the draw function.
     {
         const offset = 0;
-        const vertexCount = 4;
+        const vertexCount = 16;
         gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
     }
 }
