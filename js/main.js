@@ -227,6 +227,7 @@ function animateScene(gl, programInfo, buffers, toWorld) {
     var last = 0;
 
     var rotationCount = 0;
+    var animationMode = 0;
 
     function step(timestamp) {
         // We keep track of the time elapsed since the start.
@@ -240,18 +241,26 @@ function animateScene(gl, programInfo, buffers, toWorld) {
 
         // Perform any animations over time here. We apply transformations to toWorld.
         const singleRotation = 360000 * Math.PI / 180; // in msec.
-        if (progress < singleRotation) {
-            mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
+        if (progress > singleRotation) {
+            start = timestamp;
+            rotationCount++;
+            animationMode = ++animationMode % 3;
         }
-        else if (progress < (2 * singleRotation)) {
-            mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
-            mat4.rotate(toWorld, toWorld, delta, [0, 1, 0]);
-            mat4.rotate(toWorld, toWorld, delta, [1, 0, 0]);
-        }
-        else {
-            mat4.rotate(toWorld, toWorld, delta, [1, 0, 1]);
-            mat4.rotate(toWorld, toWorld, delta, [0, 1, 0]);
-            mat4.rotate(toWorld, toWorld, delta, [1, 0, 1]);
+
+        switch (animationMode) {
+            case 0:
+                mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
+                break;
+            case 1:
+                mat4.rotate(toWorld, toWorld, delta, [0, 0, 1]);
+                mat4.rotate(toWorld, toWorld, delta, [0, 1, 0]);
+                mat4.rotate(toWorld, toWorld, delta, [1, 0, 0]);
+                break;
+            case 2:
+                mat4.rotate(toWorld, toWorld, delta, [1, 0, 1]);
+                mat4.rotate(toWorld, toWorld, delta, [0, 1, 0]);
+                mat4.rotate(toWorld, toWorld, delta, [1, 0, 1]);
+                break;
         }
 
         // Draw the scene.
